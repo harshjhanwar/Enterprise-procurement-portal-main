@@ -1,0 +1,65 @@
+<div class="login-page">
+  <div class="login-brand-panel">
+    <div class="brand-mark">EPP</div>
+    <p class="eyebrow">Enterprise planning</p>
+    <h1>Employee Procurement Planning</h1>
+    <p>
+      Coordinate workforce demand, procurement requirements, approvals and budget visibility in one place.
+    </p>
+  </div>
+
+  <mat-card class="login-card">
+    <div class="login-header">
+      <span class="eyebrow">Welcome back</span>
+      <h2>Sign in</h2>
+      <p class="muted">Use your organization account to continue.</p>
+    </div>
+
+    @if (errorMessage) {
+      <div class="error" role="alert">{{ errorMessage }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <mat-form-field class="full" appearance="outline">
+        <mat-label>Email address</mat-label>
+        <input matInput type="email" autocomplete="username" formControlName="email">
+        @if (form.controls.email.hasError('required')) {
+          <mat-error>Email is required.</mat-error>
+        } @else if (form.controls.email.hasError('email')) {
+          <mat-error>Enter a valid email address.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="full" appearance="outline">
+        <mat-label>Password</mat-label>
+        <input
+          matInput
+          [type]="showPassword ? 'text' : 'password'"
+          autocomplete="current-password"
+          formControlName="password">
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+          (click)="showPassword = !showPassword">
+          <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        @if (form.controls.password.hasError('required')) {
+          <mat-error>Password is required.</mat-error>
+        } @else if (form.controls.password.hasError('minlength')) {
+          <mat-error>Password must be at least 12 characters.</mat-error>
+        }
+      </mat-form-field>
+
+      <button
+        class="full login-button"
+        mat-flat-button
+        color="primary"
+        type="submit"
+        [disabled]="form.invalid || loading">
+        {{ loading ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+  </mat-card>
+</div>

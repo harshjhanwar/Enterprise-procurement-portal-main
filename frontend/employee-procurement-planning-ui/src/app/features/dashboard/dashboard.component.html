@@ -1,0 +1,90 @@
+<div class="page-title">
+  <div>
+    <p class="eyebrow">Overview</p>
+    <h1>Dashboard</h1>
+    <p class="muted">A permission-aware view of procurement demand and workflow activity.</p>
+  </div>
+</div>
+
+@if (loading) {
+  <div class="loading-state card">
+    <mat-spinner diameter="36" />
+    <span>Loading dashboard…</span>
+  </div>
+} @else if (errorMessage) {
+  <div class="error" role="alert">{{ errorMessage }}</div>
+} @else if (data; as d) {
+  <section class="grid grid-4" aria-label="Key performance indicators">
+    <div class="card kpi-card">
+      <span class="muted">Total plans</span>
+      <strong>{{ d.totalPlans }}</strong>
+    </div>
+    <div class="card kpi-card">
+      <span class="muted">Draft plans</span>
+      <strong>{{ d.draftPlans }}</strong>
+    </div>
+    <div class="card kpi-card">
+      <span class="muted">Awaiting approval</span>
+      <strong>{{ d.awaitingApproval }}</strong>
+    </div>
+    <div class="card kpi-card">
+      <span class="muted">Estimated budget</span>
+      <strong>{{ d.estimatedTotalBudget | currency }}</strong>
+    </div>
+  </section>
+
+  <section class="dashboard-grid">
+    <div class="card">
+      <div class="section-heading">
+        <div>
+          <h2>Request trend</h2>
+          <p class="muted">Recent planning activity by creation date.</p>
+        </div>
+      </div>
+
+      @if (d.trends.length) {
+        <div class="trend-list">
+          @for (trend of d.trends; track trend.label) {
+            <div class="trend-row">
+              <span>{{ trend.label }}</span>
+              <span><strong>{{ trend.count }}</strong> plans · {{ trend.budget | currency }}</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">No planning activity is available yet.</div>
+      }
+    </div>
+
+    <div class="card">
+      <div class="section-heading">
+        <div>
+          <h2>Recent activity</h2>
+          <p class="muted">Latest workflow and audit events.</p>
+        </div>
+      </div>
+
+      @if (d.recentActivity.length) {
+        <div class="activity-list">
+          @for (activity of d.recentActivity; track activity.id) {
+            <div class="activity-row">
+              <div class="activity-dot"></div>
+              <div>
+                <strong>{{ activity.action }}</strong>
+                <div class="muted">
+                  {{ activity.createdAtUtc | date:'medium' }}
+                  @if (activity.actorName) { · {{ activity.actorName }} }
+                </div>
+                @if (activity.comment) {
+                  <p>{{ activity.comment }}</p>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">No activity has been recorded yet.</div>
+      }
+    </div>
+  </section>
+}

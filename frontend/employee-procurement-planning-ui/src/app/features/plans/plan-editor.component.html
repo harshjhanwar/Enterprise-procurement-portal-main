@@ -1,0 +1,244 @@
+<div class="page-title">
+  <div>
+    <p class="eyebrow">{{ isNew ? 'New request' : 'Plan details' }}</p>
+    <h1>{{ isNew ? 'New procurement plan' : planNumber }}</h1>
+    <p class="muted">{{ isNew ? 'Create a structured request for an upcoming business requirement.' : plan?.title }}</p>
+  </div>
+  @if (plan) {
+    <span class="status-badge large" [attr.data-status]="plan.status">{{ plan.status }}</span>
+  }
+</div>
+
+@if (loading) {
+  <div class="loading-state card">
+    <mat-spinner diameter="36" />
+    <span>Loading plan…</span>
+  </div>
+} @else {
+  @if (errorMessage) {
+    <div class="error" role="alert">{{ errorMessage }}</div>
+  }
+  @if (successMessage) {
+    <div class="success" role="status">{{ successMessage }}</div>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <section class="card">
+      <div class="section-heading">
+        <div>
+          <h2>Plan information</h2>
+          <p class="muted">Core ownership, planning period and budget information.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Title</mat-label>
+          <input matInput formControlName="title" [readonly]="!editable">
+          @if (form.controls.title.hasError('required')) { <mat-error>Title is required.</mat-error> }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Department</mat-label>
+          <mat-select formControlName="departmentId">
+            @for (department of departments; track department.id) {
+              <mat-option [value]="department.id">{{ department.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Planning start</mat-label>
+          <input matInput type="date" formControlName="planningPeriodStart" [readonly]="!editable">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Planning end</mat-label>
+          <input matInput type="date" formControlName="planningPeriodEnd" [readonly]="!editable">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Priority</mat-label>
+          <mat-select formControlName="priority">
+            @for (priority of priorities; track priority.value) {
+              <mat-option [value]="priority.value">{{ priority.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Estimated budget</mat-label>
+          <input matInput type="number" min="0" formControlName="estimatedBudget" [readonly]="!editable">
+          <span matPrefix>₹&nbsp;</span>
+        </mat-form-field>
+
+        <mat-form-field class="wide" appearance="outline">
+          <mat-label>Business justification</mat-label>
+          <textarea matInput rows="5" formControlName="businessJustification" [readonly]="!editable"></textarea>
+        </mat-form-field>
+
+        <mat-form-field class="wide" appearance="outline">
+          <mat-label>Notes</mat-label>
+          <textarea matInput rows="3" formControlName="notes" [readonly]="!editable"></textarea>
+        </mat-form-field>
+      </div>
+    </section>
+
+    <section class="card section-gap">
+      <div class="section-heading">
+        <div>
+          <h2>Line items</h2>
+          <p class="muted">Break the request into specific requirements.</p>
+        </div>
+        @if (editable) {
+          <button mat-stroked-button type="button" (click)="addItem()">Add item</button>
+        }
+      </div>
+
+      <div class="line-items">
+        @for (group of items.controls; track group; let i = $index) {
+          <div class="line-item">
+            <div class="line-item-header">
+              <strong>Item {{ i + 1 }}</strong>
+              @if (editable && items.length > 1) {
+                <button mat-button color="warn" type="button" (click)="removeItem(i)">Remove</button>
+              }
+            </div>
+
+            <div [formGroup]="group" class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Category</mat-label>
+                <input matInput formControlName="category" [readonly]="!editable">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Description</mat-label>
+                <input matInput formControlName="description" [readonly]="!editable">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Quantity</mat-label>
+                <input matInput type="number" min="0.0001" formControlName="quantity" [readonly]="!editable">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Estimated unit cost</mat-label>
+                <input matInput type="number" min="0" formControlName="estimatedUnitCost" [readonly]="!editable">
+                <span matPrefix>₹&nbsp;</span>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Required period</mat-label>
+                <input matInput type="date" formControlName="requiredPeriod" [readonly]="!editable">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Priority</mat-label>
+                <mat-select formControlName="priority">
+                  @for (priority of priorities; track priority.value) {
+                    <mat-option [value]="priority.value">{{ priority.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field class="wide" appearance="outline">
+                <mat-label>Justification</mat-label>
+                <textarea matInput rows="3" formControlName="justification" [readonly]="!editable"></textarea>
+              </mat-form-field>
+
+              <mat-form-field class="wide" appearance="outline">
+                <mat-label>Vendor / preference (optional)</mat-label>
+                <input matInput formControlName="vendorPreference" [readonly]="!editable">
+              </mat-form-field>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    @if (plan && (canReject || canReturn)) {
+      <section class="card section-gap">
+        <div class="section-heading">
+          <div>
+            <h2>Review comment</h2>
+            <p class="muted">A comment is required when rejecting or returning a request.</p>
+          </div>
+        </div>
+        <mat-form-field class="wide" appearance="outline">
+          <mat-label>Comment</mat-label>
+          <textarea matInput rows="4" [(ngModel)]="comment" [ngModelOptions]="{standalone: true}"></textarea>
+        </mat-form-field>
+      </section>
+    }
+
+    @if (plan; as currentPlan) {
+      @if (currentPlan.history.length) {
+      <section class="card section-gap">
+        <div class="section-heading">
+          <div>
+            <h2>History</h2>
+            <p class="muted">Recorded workflow and change activity.</p>
+          </div>
+        </div>
+
+        <div class="timeline">
+          @for (entry of currentPlan.history; track entry.id) {
+            <div class="timeline-item">
+              <div class="activity-dot"></div>
+              <div>
+                <strong>{{ entry.action }}</strong>
+                <div class="muted">
+                  {{ entry.createdAtUtc | date:'medium' }}
+                  @if (entry.actorName) { · {{ entry.actorName }} }
+                </div>
+                @if (entry.comment) { <p>{{ entry.comment }}</p> }
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+      }
+    }
+
+    <div class="actions">
+      <a mat-button routerLink="/plans">Back to plans</a>
+
+      @if (editable) {
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || items.invalid || saving">
+          {{ saving ? 'Saving…' : 'Save draft' }}
+        </button>
+      }
+
+      @if (canSubmit) {
+        <button mat-stroked-button type="button" [disabled]="!!actionInProgress" (click)="transition('submit')">
+          {{ actionInProgress === 'submit' ? 'Submitting…' : 'Submit for review' }}
+        </button>
+      }
+
+      @if (canReview && plan?.status === 'Submitted') {
+        <button mat-stroked-button type="button" [disabled]="!!actionInProgress" (click)="transition('review')">
+          Start review
+        </button>
+      }
+
+      @if (canApprove) {
+        <button mat-flat-button color="primary" type="button" [disabled]="!!actionInProgress" (click)="transition('approve')">
+          {{ actionInProgress === 'approve' ? 'Approving…' : 'Approve' }}
+        </button>
+        <button mat-stroked-button color="warn" type="button" [disabled]="!!actionInProgress || !comment.trim()" (click)="transition('reject')">
+          Reject
+        </button>
+        <button mat-button type="button" [disabled]="!!actionInProgress || !comment.trim()" (click)="transition('return')">
+          Return for correction
+        </button>
+      }
+
+      @if (plan && (plan.status === 'Draft' || plan.status === 'Submitted') &&
+        (plan.requesterId === auth.userId() || canReview)) {
+        <button mat-button color="warn" type="button" [disabled]="!!actionInProgress" (click)="transition('cancel')">
+          Cancel
+        </button>
+      }
+    </div>
+  </form>
+}

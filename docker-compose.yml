@@ -1,0 +1,56 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "LocalDevPassword!123"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'LocalDevPassword!123' -C -Q 'SELECT 1' || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'LocalDevPassword!123' -Q 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  api:
+    build:
+      context: .
+      dockerfile: src/EmployeeProcurementPlanning.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=EmployeeProcurementPlanning;User Id=sa;Password=LocalDevPassword!123;TrustServerCertificate=True;"
+      Jwt__Secret: "LocalDevelopmentOnlySecret-ChangeBeforeProduction-123456"
+      Jwt__Issuer: "EmployeeProcurementPlanning.Api"
+      Jwt__Audience: "EmployeeProcurementPlanning.Ui"
+      Cors__AllowedOrigins__0: "http://localhost:4200"
+      Database__ApplyMigrationsOnStartup: "true"
+      SeedDemoData: "true"
+      BootstrapAdmin__Email: "admin@epp.local"
+      BootstrapAdmin__Password: "Admin@EPP2026!"
+      BootstrapAdmin__DisplayName: "System Administrator"
+      DemoUsers__Manager__Email: "manager@epp.local"
+      DemoUsers__Manager__Password: "Manager@EPP2026!"
+      DemoUsers__Employee__Email: "employee@epp.local"
+      DemoUsers__Employee__Password: "Employee@EPP2026!"
+    ports:
+      - "5080:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend/employee-procurement-planning-ui
+      dockerfile: Dockerfile
+    environment:
+      EPP_API_BASE_URL: "http://localhost:5080"
+    ports:
+      - "4200:80"
+    depends_on:
+      - api
+
+volumes:
+  sql_data: {}

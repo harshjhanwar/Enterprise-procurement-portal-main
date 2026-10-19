@@ -1,0 +1,80 @@
+<div class="page-title">
+  <div>
+    <p class="eyebrow">System administration</p>
+    <h1>Administration</h1>
+    <p class="muted">Manage application roles and account availability.</p>
+  </div>
+</div>
+
+@if (errorMessage) {
+  <div class="error" role="alert">{{ errorMessage }}</div>
+}
+@if (successMessage) {
+  <div class="success" role="status">{{ successMessage }}</div>
+}
+
+<div class="card">
+  @if (loading) {
+    <div class="empty-state">Loading users…</div>
+  } @else if (!users.length) {
+    <div class="empty-state">No users were found.</div>
+  } @else {
+    <div class="table-wrap">
+      <table mat-table [dataSource]="users">
+        <ng-container matColumnDef="user">
+          <th mat-header-cell *matHeaderCellDef>User</th>
+          <td mat-cell *matCellDef="let user">
+            <strong>{{ user.displayName }}</strong>
+            <div class="muted">{{ user.email }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="department">
+          <th mat-header-cell *matHeaderCellDef>Department</th>
+          <td mat-cell *matCellDef="let user">{{ user.departmentName || '—' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="role">
+          <th mat-header-cell *matHeaderCellDef>Role</th>
+          <td mat-cell *matCellDef="let user">
+            <mat-select [(ngModel)]="user.roles[0]" aria-label="Application role">
+              <mat-option value="Administrator">Administrator</mat-option>
+              <mat-option value="Manager">Manager</mat-option>
+              <mat-option value="Employee">Employee</mat-option>
+            </mat-select>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let user">
+            <button
+              mat-stroked-button
+              type="button"
+              [class.status-active]="user.isActive"
+              [class.status-inactive]="!user.isActive"
+              (click)="toggle(user)">
+              {{ user.isActive ? 'Active' : 'Inactive' }}
+            </button>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let user">
+            <button
+              mat-flat-button
+              type="button"
+              [disabled]="savingUserId === user.id"
+              (click)="save(user)">
+              {{ savingUserId === user.id ? 'Saving…' : 'Save' }}
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
+    </div>
+  }
+</div>
