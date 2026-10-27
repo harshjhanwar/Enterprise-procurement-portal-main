@@ -13,7 +13,6 @@ public sealed class DepartmentsController(AppDbContext db) : ControllerBase
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
-        //to be removed
         var departments = await db.Departments
             .AsNoTracking()
             .Where(department => department.IsActive)
