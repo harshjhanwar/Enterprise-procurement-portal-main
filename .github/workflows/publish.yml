@@ -1,0 +1,89 @@
+name: Build and Publish Application
+
+on:
+  push:
+    branches:
+      - Test/Github_Action
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-backend:
+    name: Build and publish backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore EmployeeProcurementPlanning.sln
+
+      - name: Build solution
+        run: >
+          dotnet build EmployeeProcurementPlanning.sln
+          --configuration Release
+          --no-restore
+
+      - name: Run tests
+        run: >
+          dotnet test EmployeeProcurementPlanning.sln
+          --configuration Release
+          --no-build
+          --verbosity normal
+
+      - name: Publish API
+        run: >
+          dotnet publish
+          src/EmployeeProcurementPlanning.Api/EmployeeProcurementPlanning.Api.csproj
+          --configuration Release
+          --no-restore
+          --output ./publish/api
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: employee-procurement-api
+          path: publish/api/
+          if-no-files-found: error
+          retention-days: 14
+
+  build-frontend:
+    name: Build and publish frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend/employee-procurement-planning-ui
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/employee-procurement-planning-ui/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build -- --configuration production
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: employee-procurement-frontend
+          path: frontend/employee-procurement-planning-ui/dist/employee-procurement-planning-ui/browser/
+          if-no-files-found: error
+          retention-days: 14
